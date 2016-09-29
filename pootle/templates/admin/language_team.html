@@ -1,0 +1,76 @@
+{% extends "admin/base_app.html" %}
+{% load core i18n %}
+
+{% block title %}{% trans "Projects" %} | {{ block.super }}{% endblock %}
+
+{% block content %}
+{% block section_body %}
+<div id="content">
+  <div id="pootle-fs-project-admin" class="settings-container">
+    <h2>Language team: {{ language.name }}</h2>
+    
+    <div style="float: left; width: 50%">
+      <div style="background: #eee; margin: 1em; padding: 1em">
+	<h3>Member admin</h3>
+	
+	<a href="/">Manage your team</a>
+	<div style="padding: 0 0 1em 0">      
+	  <h4>Admins</h4>
+	  <ul>
+	    {% for user in admins %}
+	    <li>{{ user }}</li>
+	    {% endfor %}
+	  </ul>
+	</div>
+	<div style="padding: 0 0 1em 0">	
+	  <h4>Reviewers</h4>
+	  <ul>
+	    {% for user in reviewers %}
+	    <li>{{ user }}</li>
+	    {% endfor %}
+	  </ul>
+	</div>
+	<div style="padding: 0 0 1em 0">
+	  <h4>Members</h4>
+	  <ul>
+	    {% for user in members %}
+	    <li>{{ user }}</li>
+	    {% endfor %}
+	  </ul>
+	</div>
+      </div>
+    </div>
+    <div style="float: left; width: 50%">      
+      <div style="background: #eee; margin: 1em; padding: 1em">
+	<h3>Projects</h3>
+	<ul>
+	{% for tp in language.translationproject_set.all %}
+	<li>{{ tp.project.fullname }}</li>
+	{% endfor %}
+	</ul>
+      </div>
+      
+      <div style="background: #eee; margin: 1em; padding: 1em">
+	<h3>Unit admin</h3>
+	<a href="{{ links.unit_admin }}">Manage your units</a>
+      </div>
+
+      <div style="background: #eee; margin: 1em; padding: 1em">
+	<h3>Suggestion admin</h3>
+	<a href="{{ links.suggestion_admin }}">Manage your suggestions</a>
+      </div>
+
+      <div style="background: #eee; margin: 1em; padding: 1em">
+	<h3>Blocked users</h3>
+	<a href="/">un/block users</a>
+      </div>
+      
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% endblock %}
+
+{% block breadcrumbs %}
+{{ block.super }}<li>{% trans "Projects" %}</li>
+{% endblock %}

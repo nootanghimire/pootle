@@ -6,9 +6,10 @@
 # or later license. See the LICENSE file for a copy of the license and the
 # AUTHORS file for copyright and authorship information.
 
+from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.functional import cached_property
 from django.utils.lru_cache import lru_cache
 
@@ -16,10 +17,16 @@ from pootle.core.browser import make_project_item
 from pootle.core.decorators import get_path_obj, permission_required
 from pootle.core.views import (
     PootleBrowseView, PootleTranslateView, PootleExportView)
+from pootle.core.views.admin import PootleAdminFormView, PootleAdminView
 from pootle.i18n.gettext import tr_lang
 from pootle_app.views.admin.permissions import admin_permissions
+from pootle_store.constants import FUZZY, OBSOLETE, TRANSLATED, UNTRANSLATED
+from pootle_store.models import (
+    QualityCheck, Suggestion, SuggestionStates, Unit)
 
-from .forms import LanguageSpecialCharsForm
+from .forms import (
+    LanguageSpecialCharsForm, LanguageSuggestionAdminForm, LanguageTeamAdminForm,
+    LanguageUnitAdminForm)
 from .models import Language
 
 
@@ -94,6 +101,48 @@ class LanguageExportView(LanguageMixin, PootleExportView):
     source_language = "en"
 
 
+class LanguageTeamAdminView(PootleAdminView):
+    form_class = LanguageTeamAdminForm
+    template_name = "admin/language_team.html"
+
+    @cached_property
+    def language(self):
+        return Language.objects.get(code=self.kwargs["language_code"])
+
+    def get_context_data(self, **kwargs):
+        context = super(LanguageTeamAdminView, self).get_context_data(**kwargs)
+        permissions = self.language.directory.permission_sets.all()
+        context["language"] = self.language
+        context["admins"] = list(
+            permissions.filter(positive_permissions__codename="administrate")
+                       .exclude(negative_permissions__codename="administrate")
+                       .values_list("user__username", flat=True))
+        context["reviewers"] = list(
+            permissions.filter(positive_permissions__codename="review")
+                       .exclude(negative_permissions__codename="administrate")
+                       .values_list("user__username", flat=True)
+                       .exclude(user__username__in=context["admins"]))
+        context["members"] = list(
+            permissions.filter(positive_permissions__codename="suggest")
+                       .exclude(negative_permissions__codename="administrate")
+                       .values_list("user__username", flat=True)
+                       .exclude(user__username__in=(context["admins"]
+                                                    + context["reviewers"])))
+        context["links"] = dict(
+            unit_admin=reverse(
+                "pootle-language-admin-units",
+                kwargs=dict(language_code=self.language.code)),
+            suggestion_admin=reverse(
+                "pootle-language-admin-suggestions",
+                kwargs=dict(language_code=self.language.code)))
+        return context
+
+
+class LanguageTeamAdminFormView(PootleAdminFormView):
+    form_class = LanguageTeamAdminForm
+    template_name = "admin/language_team_form.html"
+
+
 @get_path_obj
 @permission_required('administrate')
 def language_admin(request, language):
@@ -141,3 +190,70 @@ def language_characters_admin(request, language):
     }
 
     return render(request, 'languages/admin/characters.html', ctx)
+
+
+class LanguageSuggestionAdminView(PootleAdminView):
+    template_name = 'admin/language_team_suggestions.html'
+
+    def get_context_data(self, **kwargs):
+        language = get_object_or_404(
+            Language,
+            code=self.kwargs["language_code"])
+        suggestions = Suggestion.objects.filter(
+            state=SuggestionStates.PENDING,
+            unit__state__gt=OBSOLETE,
+            unit__store__translation_project__language=language)
+        suggestions = suggestions.order_by("-creation_time")
+        users = set(suggestions.values_list(
+            "user__username",
+            "user__full_name"))
+        page = 1
+        if self.request.GET:
+            form = LanguageSuggestionAdminForm(self.request.GET)
+            if form.is_valid():
+                page = form.cleaned_data["page"]
+        paginator = Paginator(suggestions, 10)
+        return dict(
+            paginator=paginator,
+            suggestions=paginator.page(page),
+            users=users)
+
+
+class LanguageUnitAdminView(PootleAdminView):
+    template_name = 'admin/language_team_units.html'
+
+    def get_context_data(self, **kwargs):
+        language = get_object_or_404(
+            Language,
+            code=self.kwargs["language_code"])
+        units = Unit.objects.filter(
+            state__gt=OBSOLETE,
+            store__translation_project__language=language)
+        units = units.order_by("-creation_time")
+        page = 1
+        reviewers = set(units.values_list(
+            "reviewed_by__username",
+            "reviewed_by__full_name"))
+        submitters = set(units.values_list(
+            "submitted_by__username",
+            "submitted_by__full_name"))
+        checks = QualityCheck.objects.filter(unit__in=units)
+        checks = set(checks.values_list("name", flat=True))
+        states = [
+            (TRANSLATED, "translated"),
+            (FUZZY, "fuzzy"),
+            (UNTRANSLATED, "untranslated")]
+
+        if self.request.GET:
+            form = LanguageUnitAdminForm(self.request.GET)
+            if form.is_valid():
+                page = form.cleaned_data["page"]
+        paginator = Paginator(units, 10)
+        units = paginator.page(page)
+        return dict(
+            paginator=paginator,
+            reviewers=reviewers,
+            submitters=submitters,
+            checks=checks,
+            states=states,
+            units=units)

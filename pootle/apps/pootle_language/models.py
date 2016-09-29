@@ -190,6 +190,9 @@ class Language(models.Model, TreeItem):
     def get_absolute_url(self):
         return reverse('pootle-language-browse', args=[self.code])
 
+    def get_team_url(self):
+        return reverse('pootle-language-admin-team', args=[self.code])
+
     def get_translate_url(self, **kwargs):
         return u''.join([
             reverse('pootle-language-translate', args=[self.code]),

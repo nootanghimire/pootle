@@ -1,0 +1,186 @@
+{% extends "admin/base_app.html" %}
+{% load core i18n %}
+
+{% block title %}{% trans "Projects" %} | {{ block.super }}{% endblock %}
+
+{% block content %}
+{% block section_body %}
+
+    <h1>Units</h1>
+    <form>
+      <table>
+	<thead>
+	  <tr>
+	    <th></th>
+	    <th colspan="1" class="back-button">
+	      {% if units.has_previous %}
+	      <a href="?page={{ units.previous_page_number }}">back</a>
+	      {% endif %}
+	    </th>
+	    <th colspan="7">
+              <span class="current">
+		Page {{ units.number }} of {{ units.paginator.num_pages }}.
+              </span>
+	      Results per page
+	      <input type="number" value="{{ units.paginator.per_page }}" />
+	    </th>
+	    <th colspan="1" class="forward-button">
+	      {% if units.has_next %}
+	      <a href="?page={{ units.next_page_number }}">forward</a>
+	      {% endif %}
+	    </th>
+	  </tr>
+	  <tr>
+	    <th />
+	    <th colspan="9">
+	      Filter path <input type="text" />
+	      Filter unit <input type="text" />
+	      Submitter
+	      <select>
+		<option>-----</option>
+		{% for username, fullname in submitters %}
+		<option value="{{ username }}">
+		  {% if fullname.strip %}
+		  {{ fullname }} ({{ username }})
+		  {% else %}
+		  {{ username }}
+		  {% endif %}
+		</option>
+		{% endfor %}
+	      </select>
+	      Reviewer
+	      <select>
+		<option>-----</option>
+		{% for username, fullname in reviewers %}
+		<option value="{{ username }}">
+		  {% if fullname.strip %}
+		  {{ fullname }} ({{ username }})
+		  {% else %}
+		  {{ username }}
+		  {% endif %}
+		</option>
+		{% endfor %}
+	      </select>
+	    </th>
+	  </tr>
+	  <tr>
+	    <th />
+	    <th colspan="9">
+	      State
+	      <select>
+		<option>-----</option>
+		{% for code, name in states %}
+		<option value="{{ code }}">
+		  {{ name }}
+		</option>
+		{% endfor %}
+	      </select>
+	      Modified:
+	      from <input type="text" placeholder="yyyy-mm-dd" />
+	      to <input type="text" placeholder="yyyy-mm-dd" />
+	      Checks
+	      <select>
+		<option>-----</option>
+		{% for name in checks %}
+		<option value="{{ name }}">
+		  {{ name }}
+		</option>
+		{% endfor %}
+	      </select>
+	    </th>
+	  </tr>
+	  <tr>
+	    <th>
+	      <input type="checkbox" />
+	    </th>
+	    <th>
+	      Path
+	    </th>
+	    <th>
+	      Source
+	    </th>
+	    <th>
+	      Target
+	    </th>
+	    <th>
+	      State
+	    </th>
+	    <th>
+	      Submitter
+	    </th>
+	    <th>
+	      Reviewer
+	    </th>
+	    <th>
+	      Checks
+	    </th>
+	    <th>
+	      Created
+	    </th>
+	    <th>
+	      Modified
+	    </th>
+	  </tr>
+	</thead>
+	<tbody>
+	  {% for unit in units %}
+	  <tr>
+	    <td>
+	      <input type="checkbox" />
+	    </td>
+	    <td>
+	      {{ unit.store }}
+	    </td>
+	    <td>
+	      <a href="{{ unit.store.get_translate_url }}?unit={{ unit.pk }}">{{ unit.source }}
+	      </a>
+	    </td>
+	    <td>
+	      {{ unit.target }}
+	    </td>
+	    <td>
+	      {{ unit.state }}
+	    </td>
+	    <td>
+	      {{ unit.submitted_by }}
+	    </td>
+	    <td>
+	      {{ unit.reviewed_by }}
+	    </td>
+	    <td>
+	      {{ unit.qualitycheck_set.all }}
+	    </td>
+	    <td>
+	      {{ unit.creation_time }}
+	    </td>
+	    <td>
+	      {{ unit.mtime }}
+	    </td>
+	  </tr>
+	  {% endfor %}
+	</tbody>
+	<tfoot>
+	  <tr>
+	    <td />
+	    <td colspan="9">
+	      With selected:
+	      <select>
+		<option>-----</option>
+		<option>make fuzzy</option>
+		<option>make obsolete</option>
+	      </select>
+	      Set submitter
+	      <input type="text">
+	      Set reviewer
+	      <input type="text">
+	    </td>
+	  </tr>
+	</tfoot>
+      </table>
+    </form>
+{% endblock %}
+{% endblock %}
+
+{% block breadcrumbs %}
+{{ block.super }}<li>{% trans "Projects" %}</li>
+{% endblock %}

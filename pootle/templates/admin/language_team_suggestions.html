@@ -1,0 +1,114 @@
+{% extends "admin/base_app.html" %}
+{% load core i18n %}
+
+{% block title %}{% trans "Projects" %} | {{ block.super }}{% endblock %}
+
+{% block content %}
+{% block section_body %}
+    <h1>Suggestions</h1>
+    <form>
+      <table>
+	<thead>
+	  <tr>
+	    <th></th>
+	    <th colspan="1" class="back-button">
+	      {% if suggestions.has_previous %}
+	      <a href="?page={{ suggestions.previous_page_number }}">back</a>
+	      {% endif %}
+	    </th>
+	    <th colspan="2">
+              <span class="current">
+		Page {{ suggestions.number }} of {{ suggestions.paginator.num_pages }}.
+              </span>
+	    </th>
+	    <th colspan="1" class="forward-button">
+	      {% if suggestions.has_next %}
+	      <a href="?page={{ suggestions.next_page_number }}">forward</a>
+	      {% endif %}
+	    </th>
+	  </tr>
+	  <tr>
+	    <th />
+	    <th colspan="4">
+	      Search by user
+	      <select>
+		<option>-----</option>
+		{% for username, fullname in users %}
+		<option value="{{ username }}">
+		  {% if fullname.strip %}
+		  {{ fullname }} ({{ username }})
+		  {% else %}
+		  {{ username }}
+		  {% endif %}
+		</option>
+		{% endfor %}
+	      </select>
+	      Results per page
+	      <input type="number" value="{{ suggestions.paginator.per_page }}" />
+	    </th>
+	  </tr>
+	  <tr>
+	    <th>
+	      <input type="checkbox" />
+	    </th>
+	    <th>
+	      Source
+	    </th>
+	    <th>
+	      Suggestion
+	    </th>
+	    <th>
+	      Suggested by
+	    </th>
+	    <th>
+	      Suggested at
+	    </th>
+	  </tr>
+	</thead>
+
+	<tbody>
+	  {% for suggestion in suggestions %}
+	  <tr>
+	    <td>
+	      <input type="checkbox" />
+	    </td>
+	    <td>
+	      <a href="{{ suggestion.unit.store.get_translate_url }}?unit={{ suggestion.unit.pk }}">{{ suggestion.unit.source }}
+	      </a>
+	    </td>
+	    <td>
+	      {{ suggestion }}
+	    </td>
+	    <td>
+	      {{ suggestion.user }}
+	    </td>
+	    <td>
+	      {{ suggestion.creation_time }}
+	    </td>
+	  </tr>
+	  {% endfor %}
+	</tbody>
+	<tfoot>
+	  <tr>
+	    <td />
+	    <td colspan="4">
+	      With selected:
+	      <select>
+		<option>-----</option>
+		<option>accept</option>
+		<option>reject</option>
+	      </select>
+	      Comment <input type="text" />
+	    </td>
+	  </tr>
+	</tfoot>
+      </table>
+    </form>
+
+{% endblock %}
+{% endblock %}
+
+{% block breadcrumbs %}
+{{ block.super }}<li>{% trans "Projects" %}</li>
+{% endblock %}
+
