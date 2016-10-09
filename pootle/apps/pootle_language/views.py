@@ -217,7 +217,7 @@ class LanguageSuggestionAdminView(PootleAdminView):
             "user__full_name"))
         page = 1
         if self.request.GET:
-            form = LanguageSuggestionAdminForm(self.refquest.GET)
+            form = LanguageSuggestionAdminForm(self.request.GET)
             if form.is_valid():
                 page = form.cleaned_data["page"]
         number_paginator = self.request.GET.get('perpage', '10')
