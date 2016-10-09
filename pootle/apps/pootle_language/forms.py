@@ -16,3 +16,15 @@ class LanguageSpecialCharsForm(forms.ModelForm):
     class Meta(object):
         model = Language
         fields = ('specialchars',)
+
+
+class LanguageTeamAdminForm(forms.Form):
+    pass
+
+
+class LanguageSuggestionAdminForm(forms.Form):
+    page = forms.IntegerField()
+
+
+class LanguageUnitAdminForm(forms.Form):
+    page = forms.IntegerField()
