@@ -199,20 +199,34 @@ class LanguageSuggestionAdminView(PootleAdminView):
         language = get_object_or_404(
             Language,
             code=self.kwargs["language_code"])
-        suggestions = Suggestion.objects.filter(
+        filter_user = self.request.GET.get('filteruser', '')
+        if(filter_user.strip() == ''):
+            suggestions = Suggestion.objects.filter(
             state=SuggestionStates.PENDING,
             unit__state__gt=OBSOLETE,
             unit__store__translation_project__language=language)
+        else:
+            suggestions = Suggestion.objects.filter(
+            state=SuggestionStates.PENDING,
+            unit__state__gt=OBSOLETE,
+            unit__store__translation_project__language=language,
+            user = filter_user)
         suggestions = suggestions.order_by("-creation_time")
         users = set(suggestions.values_list(
             "user__username",
             "user__full_name"))
         page = 1
         if self.request.GET:
-            form = LanguageSuggestionAdminForm(self.request.GET)
+            form = LanguageSuggestionAdminForm(self.refquest.GET)
             if form.is_valid():
                 page = form.cleaned_data["page"]
-        paginator = Paginator(suggestions, 10)
+        number_paginator = self.request.GET.get('perpage', '10')
+        try:
+            number_paginator = int(number_paginator)
+        except ValueError:
+            number_paginator = int(float(number_paginator))
+
+        paginator = Paginator(suggestions, number_paginator)
         return dict(
             paginator=paginator,
             suggestions=paginator.page(page),
